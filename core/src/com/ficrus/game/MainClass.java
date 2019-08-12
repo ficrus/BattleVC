@@ -1,14 +1,15 @@
 package com.ficrus.game;
 
-
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas.AtlasRegion;
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
@@ -24,7 +25,9 @@ import com.codeandweb.physicseditor.PhysicsShapeCache;
 import java.util.HashMap;
 import java.util.Random;
 
-public class MyGame extends ApplicationAdapter {
+public class MainClass extends ApplicationAdapter {
+    private static int WORLD_WIDTH = 16;
+    private static int WORLD_HEIGHT = 8;
     private static final float STEP_TIME = 1f / 60f;
     private static final int VELOCITY_ITERATIONS = 6;
     private static final int POSITION_ITERATIONS = 2;
@@ -40,11 +43,9 @@ public class MyGame extends ApplicationAdapter {
 
     private World world;
     private Box2DDebugRenderer debugRenderer;
-    private PhysicsShapeCache physicsBodies;
     private float accumulator = 0;
-    private Body ground;
-    private Body[] fruitBodies = new Body[COUNT];
-    private String[] names = new String[COUNT];
+    PhysicsShapeCache physicsBodies;
+    private Body[] bodies = new Body[1];
 
     @Override
     public void create() {
@@ -56,9 +57,18 @@ public class MyGame extends ApplicationAdapter {
         addSprites();
 
         Box2D.init();
-        world = new World(new Vector2(0, -10), true);
+        world = new World(new Vector2(0, 0), true);
         physicsBodies = new PhysicsShapeCache("sprites.xml");
-        generateFruit();
+
+        String[] object_names = new String[]{"crate"};
+
+        Random random = new Random();
+
+
+
+        Body body = physicsBodies.createBody(object_names[0], world, SCALE, SCALE);
+        body.setTransform(5f, 5f, (float) 0);
+        bodies[0] = body;
 
         debugRenderer = new Box2DDebugRenderer();
     }
@@ -79,60 +89,18 @@ public class MyGame extends ApplicationAdapter {
         }
     }
 
-    private void generateFruit() {
-        String[] fruitNames = new String[]{"banana", "cherries", "orange"};
-
-        Random random = new Random();
-
-        for (int i = 0; i < fruitBodies.length; i++) {
-            String name = fruitNames[random.nextInt(fruitNames.length)];
-
-            float x = random.nextFloat() * 10;
-            float y = random.nextFloat() * 10 + 10;
-
-            names[i] = name;
-            fruitBodies[i] = createBody(name, x, y);
-        }
-    }
-
-    private Body createBody(String name, float x, float y){
-        Body body = physicsBodies.createBody(name, world, SCALE, SCALE);
-        body.setTransform(x, y, (float) 0);
-
-        return body;
-    }
-
     @Override
     public void resize(int width, int height) {
         viewport.update(width, height, true);
 
         batch.setProjectionMatrix(camera.combined);
 
-        createGround();
-    }
-
-    private void createGround() {
-        if (ground != null) world.destroyBody(ground);
-
-        BodyDef bodyDef = new BodyDef();
-        bodyDef.type = BodyDef.BodyType.StaticBody;
-
-        FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.friction = 1;
-
-        PolygonShape shape = new PolygonShape();
-        shape.setAsBox(camera.viewportWidth, 1f);
-        fixtureDef.shape = shape;
-
-        ground = world.createBody(bodyDef);
-        ground.createFixture(fixtureDef);
-        ground.setTransform(0, 0, 0);
-
-        shape.dispose();
+        bodies[0].setTransform(camera.viewportWidth/2, camera.viewportHeight/2,0f);
     }
 
     @Override
     public void render() {
+        handleInput();
         Gdx.gl.glClearColor(0f, 0f, 0f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
@@ -140,13 +108,10 @@ public class MyGame extends ApplicationAdapter {
 
         batch.begin();
 
-        for (int i = 0; i < fruitBodies.length; i++) {
-            Body body = fruitBodies[i];
-            String name = names[i];
-
+        for (Body body : bodies) {
             Vector2 position = body.getPosition();
             float degrees = (float) Math.toDegrees(body.getAngle());
-            drawSprite(name, position.x, position.y, degrees);
+            drawSprite("crate", position.x, position.y, degrees);
         }
 
         batch.end();
@@ -172,6 +137,22 @@ public class MyGame extends ApplicationAdapter {
         sprite.draw(batch);
     }
 
+    private void handleInput() {
+        if (Gdx.input.isKeyPressed(Input.Keys.UP)) {
+            bodies[0].applyLinearImpulse(new Vector2(0,1),bodies[0].getWorldCenter(), true);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
+            bodies[0].applyLinearImpulse(new Vector2(0,-1),bodies[0].getWorldCenter(), true);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
+            bodies[0].applyLinearImpulse(new Vector2(-1,0),bodies[0].getWorldCenter(), true);
+        }
+        if (Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
+            bodies[0].applyLinearImpulse(new Vector2(1,0),bodies[0].getWorldCenter(), true);
+        }
+
+    }
+
     @Override
     public void dispose() {
         textureAtlas.dispose();
@@ -180,3 +161,5 @@ public class MyGame extends ApplicationAdapter {
         debugRenderer.dispose();
     }
 }
+
+
