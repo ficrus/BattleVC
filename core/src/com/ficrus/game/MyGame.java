@@ -151,8 +151,8 @@ public class MyGame extends ApplicationAdapter {
 
         batch.end();
 
-        // uncomment to show the polygons
-        // debugRenderer.render(world, camera.combined);
+
+        debugRenderer.render(world, camera.combined);
     }
 
     private void stepWorld() {
