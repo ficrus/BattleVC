@@ -204,12 +204,12 @@ public class MyGame extends ApplicationAdapter implements InputProcessor {
 
         debugRenderer.render(world, cam.combined);
     }
-
     private void look_at_player(){
         float oldX = cam.position.x;
         float oldY = cam.position.y;
         cam.position.x = MathUtils.clamp(oldX, player.getPosition().x - BOUND, player.getPosition().x + BOUND);
         cam.position.y = MathUtils.clamp(oldY, player.getPosition().y - BOUND, player.getPosition().y + BOUND);
+
     }
 
     private void stepWorld() {
